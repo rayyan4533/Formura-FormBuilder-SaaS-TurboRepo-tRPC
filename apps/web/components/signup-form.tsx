@@ -1,159 +1,88 @@
 "use client";
 
 import { useState } from "react";
-import { Form, SubmitHandler, useForm, } from "react-hook-form";
-import { useSignup } from "~/hooks/api/auth";
-
+import { useForm, type SubmitHandler } from "react-hook-form";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-
-import { cn } from "~/lib/utils";
-
+import { Loader2 } from "lucide-react";
+import { useSignup } from "~/hooks/api/auth";
+import { Button, ErrorNote, Field, inputClass } from "~/components/ui/kit";
 
 type SignupFormValues = {
-    fullName: string;
-    email: string;
-    password: string;
+  fullName: string;
+  email: string;
+  password: string;
 };
 
 export function SignUpForm() {
-    const router = useRouter();
-    const { createUserWithEmailAndPasswordAsync, isError, error } = useSignup();
-    const [submitting, setSubmitting] = useState(false)
-    const [formError, setFormError] = useState<string | null>(null)
+  const router = useRouter();
+  const { createUserWithEmailAndPasswordAsync } = useSignup();
+  const [formError, setFormError] = useState<string | null>(null);
 
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm<SignupFormValues>({ defaultValues: { fullName: "", email: "", password: "" } });
 
-    //#region open REACT-HOOK-FORM
-    const {
-        register,
-        handleSubmit,
-        formState: { errors },
-    } = useForm<SignupFormValues>({
-        defaultValues: {
-            fullName: "",
-            email: "",
-            password: "",
-        },
-    });
-    //#endregion
-
-    //ONSUBMIT HANDLER REACT-HOOK FORM CUSTOM
-    const onSubmit: SubmitHandler<SignupFormValues> = async (values) => {
-        setFormError(null)
-        setSubmitting(true)
-
-        try {
-            await createUserWithEmailAndPasswordAsync({
-                fullName: values.fullName,
-                email: values.email,
-                password: values.password
-            });
-            router.replace("/dashboard");
-        } catch (error: any) {
-            setFormError(error?.message || "Failed to create account. Please try again.");
-        }
-        finally {
-            setSubmitting(false);
-        }
+  const onSubmit: SubmitHandler<SignupFormValues> = async (values) => {
+    setFormError(null);
+    try {
+      await createUserWithEmailAndPasswordAsync(values);
+      router.replace("/dashboard");
+    } catch (err: any) {
+      setFormError(err?.message || "Failed to create account. Please try again.");
     }
+  };
 
-    return (
-        <section className="flex flex-col justify-center items-center mx-auto" >
-            {/* heading */}
-            < div >
-                <h1>welcom to Formura</h1>
-            </div >
-            {/* Global Error Banner */}
-            {(formError) && (
-                <div className="bg-destructive/10 mb-4 p-2.5 rounded text-destructive text-xs">
-                    {formError || "An error occurred."}
-                </div>
-            )}
+  return (
+    <div className="w-full max-w-sm">
+      <h1 className="font-display text-4xl">Create your account</h1>
+      <p className="mt-1 mb-8 text-sm text-muted-foreground">Your first form is a minute away.</p>
 
-            {/* 2 container of form and image */}
-            < main className="flex justify-center items-center mx-auto" >
-                {/* Form side */}
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+        {formError && <ErrorNote>{formError}</ErrorNote>}
+        <Field label="Full name" htmlFor="fullName" error={errors.fullName?.message}>
+          <input
+            id="fullName"
+            autoComplete="name"
+            placeholder="Ada Lovelace"
+            className={inputClass}
+            {...register("fullName", { required: "Full name is required" })}
+          />
+        </Field>
+        <Field label="Email" htmlFor="email" error={errors.email?.message}>
+          <input
+            id="email"
+            type="email"
+            autoComplete="email"
+            placeholder="name@example.com"
+            className={inputClass}
+            {...register("email", { required: "Email is required" })}
+          />
+        </Field>
+        <Field label="Password" htmlFor="password" error={errors.password?.message}>
+          <input
+            id="password"
+            type="password"
+            autoComplete="new-password"
+            placeholder="••••••••"
+            className={inputClass}
+            {...register("password", { required: "Password is required" })}
+          />
+        </Field>
+        <Button type="submit" disabled={isSubmitting} className="w-full">
+          {isSubmitting && <Loader2 className="size-4 animate-spin" />}
+          {isSubmitting ? "Creating account…" : "Sign up"}
+        </Button>
+      </form>
 
-                <form onSubmit={handleSubmit(onSubmit)}>
-
-                    <div className="space-y-1">
-                        <label htmlFor="fullName" className="block font-medium text-xs">
-                            Full Name
-                        </label>
-                        <input
-                            id="fullName"
-                            type="text"
-                            placeholder="John Doe"
-                            {...register("fullName", { required: "Full name is required" })}
-                            className="bg-background px-3 py-1.5 border rounded outline-none focus:ring-1 focus:ring-ring w-full text-sm"
-                        />
-                        {errors.fullName && (
-                            <p className="text-destructive text-xs">{errors.fullName.message}</p>
-                        )}
-                    </div>
-
-                    {/* Email Field */}
-                    <div className="space-y-1">
-                        <label htmlFor="email" className="block font-medium text-xs">
-                            Email
-                        </label>
-                        <input
-                            id="email"
-                            type="email"
-                            placeholder="name@example.com"
-                            {...register("email", { required: "Email is required" })}
-                            className="bg-background px-3 py-1.5 border rounded outline-none focus:ring-1 focus:ring-ring w-full text-sm"
-                        />
-                        {errors.email && (
-                            <p className="text-destructive text-xs">{errors.email.message}</p>
-                        )}
-                    </div>
-
-                    {/* Password Field */}
-                    <div className="space-y-1">
-                        <label htmlFor="password" className="block font-medium text-xs">
-                            Password
-                        </label>
-                        <input
-                            id="password"
-                            type="password"
-                            placeholder="••••••••"
-                            {...register("password", { required: "Password is required" })}
-                            className="bg-background px-3 py-1.5 border rounded outline-none focus:ring-1 focus:ring-ring w-full text-sm"
-                        />
-                        {errors.password && (
-                            <p className="text-destructive text-xs">{errors.password.message}</p>
-                        )}
-                    </div>
-                    {/* signup btns */}
-                    <div className="space-y-3 pt-2">
-                        <button
-                            type="submit"
-                            disabled={submitting}
-                            className="flex justify-center items-center bg-primary hover:bg-primary/90 disabled:opacity-50 px-4 py-2 rounded w-full font-medium text-primary-foreground text-sm transition-colors"
-                        >
-                            {submitting ? "Creating account..." : "Sign Up"}
-                        </button>
-
-                        <p className="text-muted-foreground text-xs text-center">
-                            Already have an account?{" "}
-                            <Link href="/login" className="font-medium text-primary underline underline-offset-4">
-                                Login
-                            </Link>
-                        </p>
-                    </div>
-                </form>
-
-
-                {/* image*/}
-                <div>
-                </div >
-            </main >
-
-
-
-        </section >
-
-
-    )
+      <p className="mt-6 text-center text-[13px] text-muted-foreground">
+        Already have an account?{" "}
+        <Link href="/login" className="font-medium text-foreground underline underline-offset-4">
+          Log in
+        </Link>
+      </p>
+    </div>
+  );
 }
