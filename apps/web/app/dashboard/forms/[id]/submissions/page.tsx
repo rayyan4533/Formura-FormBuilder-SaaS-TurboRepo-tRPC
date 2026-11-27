@@ -3,13 +3,13 @@
 import { use } from "react";
 import Link from "next/link";
 import { format } from "date-fns";
-import { ArrowLeft, Inbox, RefreshCw } from "lucide-react";
+import { ArrowLeft, RefreshCw } from "lucide-react";
 
-import {
-  useGetForm,
-  useGetFields,
-  useGetFormSubmissions,
-} from "~/hooks/api/form";
+import { useGetForm, useGetFields, useGetFormSubmissions } from "~/hooks/api/form";
+import { PageHeader } from "~/components/page-header";
+import { CopyLinkButton } from "~/components/copy-link-button";
+import { Button, ErrorNote, buttonClass } from "~/components/ui/kit";
+import { cn } from "~/lib/utils";
 
 interface SubmissionsPageProps {
   params: Promise<{ id: string }>;
@@ -36,122 +36,75 @@ export default function FormSubmissionsPage({ params }: SubmissionsPageProps) {
     return idxA - idxB;
   });
 
+  const count = submissions.length;
+
   return (
-    <div className="flex flex-col bg-background min-h-screen text-foreground">
-      {/* Header */}
-      <header className="flex sm:flex-row flex-col justify-between sm:items-center gap-4 bg-card px-6 py-4 border-border border-b">
-        <div className="flex items-center gap-3">
-          <Link
-            href={`/dashboard/forms/${formId}`}
-            className="hover:bg-accent p-2 border border-border rounded-md text-muted-foreground hover:text-foreground"
-            title="Back to Form Builder"
-          >
-            <ArrowLeft className="w-4 h-4" />
-          </Link>
-          <div>
-            <h1 className="font-bold text-xl">Submissions</h1>
-            <p className="text-muted-foreground text-xs">
-              {isLoadingForm ? "Loading..." : form?.title || "Form Responses"}
-            </p>
-          </div>
+    <div className="mx-auto max-w-6xl space-y-8 px-5 py-10 sm:px-8">
+      <div className="space-y-4">
+        <Link href={`/dashboard/forms/${formId}`} className={buttonClass("ghost", "sm", "-ml-3")}>
+          <ArrowLeft className="size-4" /> Back to builder
+        </Link>
+        <PageHeader
+          title={form?.title || "Responses"}
+          subtitle={isLoading || error ? "Responses" : `${count} ${count === 1 ? "response" : "responses"}`}
+          action={
+            <div className="flex gap-2">
+              <CopyLinkButton formId={formId} showLabel />
+              <Button variant="outline" size="sm" onClick={() => refetch()} disabled={isLoadingSubmissions}>
+                <RefreshCw className={cn("size-4", isLoadingSubmissions && "animate-spin")} /> Refresh
+              </Button>
+            </div>
+          }
+        />
+      </div>
+
+      {isLoading ? (
+        <div className="h-40 animate-pulse rounded-xl bg-muted/60" aria-label="Loading responses" />
+      ) : error ? (
+        <ErrorNote>Failed to load submissions. Please try refreshing.</ErrorNote>
+      ) : count === 0 ? (
+        <div className="rounded-xl border border-dashed px-6 py-14 text-center">
+          <p className="font-display text-2xl">Nothing yet</p>
+          <p className="mt-1 text-sm text-muted-foreground">Share your form to start collecting responses.</p>
         </div>
-
-        <button
-          onClick={() => refetch()}
-          disabled={isLoadingSubmissions}
-          className="flex items-center self-start sm:self-auto gap-2 hover:bg-accent px-3 py-1.5 border border-border rounded-md font-medium text-xs"
-        >
-          <RefreshCw className={`h-3.5 w-3.5 ${isLoadingSubmissions ? "animate-spin" : ""}`} />
-          Refresh
-        </button>
-      </header>
-
-      {/* Main Container */}
-      <main className="flex-1 mx-auto p-6 w-full max-w-7xl">
-        <div className="bg-card shadow-sm border border-border rounded-xl overflow-x-auto">
-          <table className="w-full text-sm text-left border-collapse">
+      ) : (
+        <div className="window overflow-x-auto">
+          <table className="w-full text-left text-sm">
             <thead>
-              <tr className="bg-muted/40 border-border border-b text-muted-foreground">
-                <th className="p-4 min-w-[160px] font-semibold whitespace-nowrap">
-                  Submitted At
-                </th>
-
-                {isLoadingFields ? (
-                  <th className="p-4 font-semibold">Loading fields...</th>
-                ) : (
-                  sortedFields.map((field: any) => (
-                    <th key={field.id} className="p-4 min-w-[150px] font-semibold">
-                      <div className="flex items-center gap-1 max-w-[200px] truncate" title={field.label}>
-                        <span>{field.label}</span>
-                        {field.isRequired && <span className="font-bold text-destructive">*</span>}
-                      </div>
-                    </th>
-                  ))
-                )}
+              <tr className="border-b bg-muted font-mono text-xs text-muted-foreground">
+                <th className="px-5 py-3 font-medium whitespace-nowrap">Submitted</th>
+                {sortedFields.map((field: any) => (
+                  <th key={field.id} className="min-w-[160px] px-5 py-3 font-medium">
+                    <span className="block max-w-[220px] truncate" title={field.label}>
+                      {field.label}
+                    </span>
+                  </th>
+                ))}
               </tr>
             </thead>
-
-            <tbody className="divide-y divide-border">
-              {isLoading ? (
-                <tr>
-                  <td colSpan={Math.max(sortedFields.length + 1, 2)} className="p-8 text-muted-foreground text-center">
-                    Loading submissions...
-                  </td>
-                </tr>
-              ) : error ? (
-                <tr>
-                  <td
-                    colSpan={Math.max(sortedFields.length + 1, 2)}
-                    className="p-8 text-destructive text-center"
-                  >
-                    Failed to load submissions. Please try refreshing.
-                  </td>
-                </tr>
-              ) : submissions.length === 0 ? (
-                <tr>
-                  <td
-                    colSpan={Math.max(sortedFields.length + 1, 2)}
-                    className="p-12 text-muted-foreground text-center"
-                  >
-                    <Inbox className="opacity-50 mx-auto mb-2 w-8 h-8" />
-                    <p className="font-medium text-base">No submissions yet</p>
-                    <p className="mt-1 text-xs">Share your form to start collecting responses.</p>
-                  </td>
-                </tr>
-              ) : (
-                submissions.map((submission: any) => {
-                  const valuesList = (submission.values as Array<{ formFieldId: string; value: string }>) || [];
-
-                  return (
-                    <tr key={submission.id} className="hover:bg-muted/30 transition-colors">
-                      <td className="p-4 font-medium text-muted-foreground text-xs whitespace-nowrap">
-                        {submission.createdAt
-                          ? format(new Date(submission.createdAt), "MMM d, yyyy HH:mm")
-                          : "—"}
-                      </td>
-
-                      {sortedFields.map((field: any) => {
-                        const answerObj = valuesList.find((v) => v.formFieldId === field.id);
-                        const answerValue = answerObj?.value?.trim();
-
-                        return (
-                          <td key={field.id} className="p-4 max-w-[250px] text-sm truncate">
-                            {answerValue ? (
-                              <span>{answerValue}</span>
-                            ) : (
-                              <span className="text-muted-foreground/50 select-none">—</span>
-                            )}
-                          </td>
-                        );
-                      })}
-                    </tr>
-                  );
-                })
-              )}
+            <tbody className="divide-y">
+              {submissions.map((submission: any) => {
+                const valuesList = (submission.values as Array<{ formFieldId: string; value: string }>) || [];
+                return (
+                  <tr key={submission.id} className="hover:bg-muted/50">
+                    <td className="px-5 py-3.5 text-xs whitespace-nowrap text-muted-foreground tabular-nums">
+                      {submission.createdAt ? format(new Date(submission.createdAt), "MMM d, yyyy HH:mm") : "—"}
+                    </td>
+                    {sortedFields.map((field: any) => {
+                      const value = valuesList.find((v) => v.formFieldId === field.id)?.value?.trim();
+                      return (
+                        <td key={field.id} className="max-w-[260px] truncate px-5 py-3.5" title={value}>
+                          {value || <span className="text-muted-foreground/50">—</span>}
+                        </td>
+                      );
+                    })}
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
-      </main>
+      )}
     </div>
   );
 }

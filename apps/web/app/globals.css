@@ -4,76 +4,83 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 4px);
-  --radius-2xl: calc(var(--radius) + 8px);
-  --radius-3xl: calc(var(--radius) + 12px);
-  --radius-4xl: calc(var(--radius) + 16px);
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+  --font-display: var(--font-geist-mono), ui-monospace, monospace;
+
+  --radius-sm: 0px;
+  --radius-md: 0px;
+  --radius-lg: 0px;
+  --radius-xl: 0px;
+  --radius-2xl: 0px;
+
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
   --color-card-foreground: var(--card-foreground);
-  --color-popover: var(--popover);
-  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--card);
+  --color-popover-foreground: var(--card-foreground);
   --color-primary: var(--primary);
   --color-primary-foreground: var(--primary-foreground);
-  --color-secondary: var(--secondary);
-  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--muted);
+  --color-secondary-foreground: var(--foreground);
   --color-muted: var(--muted);
   --color-muted-foreground: var(--muted-foreground);
-  --color-accent: var(--accent);
-  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--muted);
+  --color-accent-foreground: var(--foreground);
+  --color-ink: var(--ink);
+  --color-brand: var(--brand);
+  --color-brand-soft: var(--brand-soft);
   --color-destructive: var(--destructive);
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
-  --color-neon-yellow: var(--neon-yellow);
-  --color-neon-amber: var(--neon-amber);
-  --color-neon-gold: var(--neon-gold);
 }
 
-:root,
+/* A late-80s desktop: office paper, teal title bars, hard black shadows. */
+:root {
+  --background: #ebe6d8;
+  --foreground: #1c1b17;
+  --card: #fbf9f2;
+  --card-foreground: #1c1b17;
+  --primary: #0f6b66;
+  --primary-foreground: #fdfcf7;
+  --muted: #ded8c7;
+  --muted-foreground: #5c584c;
+  --brand: #0f6b66;
+  --brand-soft: #d6e6df;
+  --destructive: #a8271f;
+  --border: #b4ad99;
+  --input: #8c8672;
+  --ring: #0f6b66;
+  --field: #ffffff;
+  --ink: #1c1b17;
+  --bevel-light: #ffffff;
+  --bevel-dark: #8c8672;
+  color-scheme: light;
+}
+
+/* The same machine at night: a phosphor terminal. */
 .dark {
-  --radius: 0.75rem;
-
-  /* Deep Space Dark Charcoal Background */
-  --background: #09090b;
-  --foreground: #fafafa;
-
-  /* Dark Glassmorphic Zinc Surface */
-  --card: #18181b;
-  --card-foreground: #fafafa;
-
-  --popover: #18181b;
-  --popover-foreground: #fafafa;
-
-  /* Cyber Neon Yellow Primary */
-  --primary: #eab308;
-  --primary-foreground: #09090b;
-
-  /* Warm Electric Amber Secondary */
-  --secondary: #451a03;
-  --secondary-foreground: #fbbf24;
-
-  --muted: #27272a;
-  --muted-foreground: #a1a1aa;
-
-  --accent: #27272a;
-  --accent-foreground: #facc15;
-
-  --destructive: #f43f5e;
-
-  /* Glowing Yellow Border Tokens */
-  --border: rgba(234, 179, 8, 0.25);
-  --input: rgba(234, 179, 8, 0.3);
-  --ring: #eab308;
-
-  /* Direct Yellow Neon Tokens */
-  --neon-yellow: #facc15;
-  --neon-amber: #f59e0b;
-  --neon-gold: #fbbf24;
+  --background: #0d120f;
+  --foreground: #d5ead7;
+  --card: #141c17;
+  --card-foreground: #d5ead7;
+  --primary: #7fe3a1;
+  --primary-foreground: #08130c;
+  --muted: #1e2a22;
+  --muted-foreground: #8fab94;
+  --brand: #7fe3a1;
+  --brand-soft: #1c3325;
+  --destructive: #ff8a7a;
+  --border: #34483a;
+  --input: #4c6753;
+  --ring: #7fe3a1;
+  --field: #0a0f0c;
+  --ink: #000000;
+  --bevel-light: #3a5142;
+  --bevel-dark: #000000;
+  color-scheme: dark;
 }
 
 @layer base {
@@ -81,32 +88,74 @@
     @apply border-border outline-ring/50;
   }
   body {
-    @apply bg-background text-foreground antialiased;
-    background-image: 
-      radial-gradient(at 0% 0%, rgba(234, 179, 8, 0.15) 0px, transparent 50%),
-      radial-gradient(at 100% 100%, rgba(245, 158, 11, 0.12) 0px, transparent 50%);
-    background-attachment: fixed;
+    @apply bg-background font-sans text-foreground antialiased;
+  }
+  button:not(:disabled),
+  [role="button"] {
+    cursor: pointer;
+  }
+  :focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+  }
+  ::selection {
+    background: var(--brand-soft);
+  }
+}
+
+@layer base {
+  /* Headings read like typewriter output: monospaced, heavy and tightly set. */
+  .font-display {
+    font-weight: 700;
+    letter-spacing: -0.035em;
+  }
+}
+
+@layer components {
+  /* A desktop window: hard outline and offset shadow. */
+  .window {
+    background: var(--card);
+    border: 1px solid var(--ink);
+    box-shadow: 4px 4px 0 0 color-mix(in srgb, var(--ink) 85%, transparent);
+  }
+  .dark .window {
+    border-color: var(--input);
+  }
+  /* Pinstriped title bar, with the caption sitting on a solid plate. */
+  .titlebar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    height: 30px;
+    padding: 0 8px;
+    border-bottom: 1px solid var(--ink);
+    background: repeating-linear-gradient(to bottom, var(--brand) 0 2px, transparent 2px 4px), var(--card);
+    background-clip: content-box, border-box;
+  }
+  .dark .titlebar {
+    border-color: var(--input);
+  }
+  .bevel {
+    box-shadow:
+      inset 1px 1px 0 var(--bevel-light),
+      inset -1px -1px 0 var(--bevel-dark);
+  }
+  .bevel:active {
+    box-shadow:
+      inset 1px 1px 0 var(--bevel-dark),
+      inset -1px -1px 0 var(--bevel-light);
+    transform: translate(1px, 1px);
+  }
+  .sunken {
+    background: var(--field);
+    box-shadow: inset 2px 2px 0 color-mix(in srgb, var(--bevel-dark) 35%, transparent);
   }
 }
 
 @layer utilities {
-  .glow-yellow {
-    box-shadow: 0 0 22px -2px rgba(234, 179, 8, 0.45), 0 0 8px -2px rgba(250, 204, 21, 0.35);
-  }
-  .glow-amber {
-    box-shadow: 0 0 22px -2px rgba(245, 158, 11, 0.45), 0 0 8px -2px rgba(245, 158, 11, 0.35);
-  }
-  .glow-border-yellow {
-    border-color: rgba(250, 204, 21, 0.7);
-    box-shadow: 0 0 14px -2px rgba(250, 204, 21, 0.4);
-  }
-  .glow-border-amber {
-    border-color: rgba(245, 158, 11, 0.7);
-    box-shadow: 0 0 14px -2px rgba(245, 158, 11, 0.4);
-  }
-  .glass-neon-yellow {
-    background: rgba(24, 24, 27, 0.85);
-    backdrop-filter: blur(12px);
-    border: 1px solid rgba(234, 179, 8, 0.25);
+  /* Dithered desktop pattern for canvas and backdrops. */
+  .bg-dots {
+    background-image: radial-gradient(var(--border) 1px, transparent 1px);
+    background-size: 6px 6px;
   }
 }

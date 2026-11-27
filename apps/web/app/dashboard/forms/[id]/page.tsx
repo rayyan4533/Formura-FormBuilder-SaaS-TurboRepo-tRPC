@@ -2,7 +2,6 @@
 
 import { use, useState, useEffect, useRef } from "react";
 import Link from "next/link";
-import { format } from "date-fns";
 import {
   ArrowLeft,
   Plus,
@@ -10,7 +9,6 @@ import {
   Eye,
   Inbox,
   Loader2,
-  Layers,
   Search,
   GripVertical,
   Type,
@@ -22,8 +20,6 @@ import {
   UploadCloud,
   Check,
   Settings2,
-  AlertCircle,
-  Sparkles,
   Pencil,
   Copy,
   X,
@@ -37,6 +33,9 @@ import {
   useDeleteField,
 } from "~/hooks/api/form";
 import { DashboardHamburgerToggle } from "~/components/dashboard-sidebar";
+import { CopyLinkButton } from "~/components/copy-link-button";
+import { Button, Field, buttonClass, inputClass } from "~/components/ui/kit";
+import { cn } from "~/lib/utils";
 
 interface FormDetailsPageProps {
   params: Promise<{ id: string }>;
@@ -140,6 +139,20 @@ const PALETTE_ITEMS: PaletteItem[] = [
     defaultDescription: "Attach documents or images (Max 10MB)",
   },
 ];
+
+const PALETTE_CATEGORIES = [
+  { id: "text", label: "Text" },
+  { id: "inputs", label: "Inputs" },
+  { id: "advanced", label: "Advanced" },
+] as const;
+
+const TYPE_NAMES: Record<FieldItem["type"], string> = {
+  TEXT: "Text",
+  NUMBER: "Number",
+  EMAIL: "Email",
+  YES_NO: "Yes / No",
+  PASSWORD: "Password",
+};
 
 const getFieldIcon = (type: string, label: string = "") => {
   const lower = label.toLowerCase();
@@ -481,425 +494,272 @@ export default function FormDetailsPage({ params }: FormDetailsPageProps) {
       item.description.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const textCategoryItems = filteredPalette.filter((i) => i.category === "text");
-  const inputCategoryItems = filteredPalette.filter((i) => i.category === "inputs");
-  const advancedCategoryItems = filteredPalette.filter((i) => i.category === "advanced");
+  const paletteGroups = PALETTE_CATEGORIES.map((category) => ({
+    ...category,
+    items: filteredPalette.filter((i) => i.category === category.id),
+  })).filter((group) => group.items.length > 0);
 
   if (isLoading) {
     return (
-      <div className="flex flex-col justify-center items-center gap-3 bg-background p-8 min-h-screen text-yellow-400">
-        <Loader2 className="w-8 h-8 animate-spin" />
-        <p className="font-medium text-sm">Loading dark yellow neon form builder workspace...</p>
+      <div className="flex h-screen items-center justify-center gap-2 text-sm text-muted-foreground">
+        <Loader2 className="size-4 animate-spin" /> Opening builder…
       </div>
     );
   }
 
   if (error || !form) {
     return (
-      <div className="space-y-4 bg-background p-12 min-h-screen text-center">
-        <AlertCircle className="mx-auto w-12 h-12 text-rose-400" />
-        <h2 className="font-bold text-rose-400 text-xl">Form Not Found</h2>
-        <p className="text-zinc-400 text-sm">
-          The requested form does not exist or failed to load.
-        </p>
-        <Link
-          href="/dashboard/forms"
-          className="inline-flex items-center gap-2 hover:bg-yellow-500/10 px-4 py-2 border border-yellow-500/30 rounded-xl font-medium text-yellow-300 text-sm"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          Back to Forms
+      <div className="flex h-screen flex-col items-center justify-center gap-2 p-6 text-center">
+        <h2 className="font-display text-3xl">Form not found</h2>
+        <p className="text-sm text-muted-foreground">It doesn't exist or failed to load.</p>
+        <Link href="/dashboard/forms" className={buttonClass("outline", "sm", "mt-3")}>
+          <ArrowLeft className="size-4" /> Back to forms
         </Link>
       </div>
     );
   }
 
+  const SelectedIcon = selectedField ? getFieldIcon(selectedField.type, selectedField.label) : Type;
+  const previewInput = cn(inputClass, "bg-background");
+
   return (
-    <div className="flex flex-col bg-background h-screen min-h-screen overflow-hidden text-foreground">
-      {/* Top Navigation Bar - Dark Yellow Neon Header */}
-      <header className="z-20 flex justify-between items-center gap-2 sm:gap-4 bg-zinc-900/95 backdrop-blur-md shadow-xl shadow-yellow-950/40 px-3 sm:px-6 py-2.5 sm:py-3 border-yellow-500/25 border-b shrink-0">
-        <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-          <DashboardHamburgerToggle className="md:hidden shrink-0 border-yellow-500/35 text-yellow-400 hover:bg-yellow-500/10" />
-          <Link
-            href="/dashboard/forms"
-            className="hover:bg-yellow-500/10 p-1.5 sm:p-2 border border-yellow-500/25 rounded-xl text-zinc-400 hover:text-yellow-300 transition-colors shrink-0"
-            title="Back to Forms"
-          >
-            <ArrowLeft className="w-4 h-4" />
+    <div className="flex h-screen flex-col overflow-hidden">
+      {/* ================= TOP BAR ================= */}
+      <header className="z-20 flex h-14 shrink-0 items-center justify-between gap-2 border-b bg-background px-3 sm:px-4">
+        <div className="flex min-w-0 items-center gap-1 sm:gap-2">
+          <DashboardHamburgerToggle className="md:hidden" />
+          <Link href="/dashboard/forms" className={buttonClass("ghost", "icon")} title="Back to forms" aria-label="Back to forms">
+            <ArrowLeft className="size-4" />
           </Link>
           <div className="min-w-0">
-            <div className="flex items-center gap-1.5 sm:gap-2">
-              <h1 className="font-black text-sm sm:text-base md:text-lg truncate max-w-[120px] sm:max-w-[200px] md:max-w-md text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 via-amber-300 to-yellow-500">
-                {formTitle}
-              </h1>
-              <span className="bg-yellow-500/10 border border-yellow-500/35 px-1.5 sm:px-2 py-0.5 rounded-full font-extrabold text-[10px] text-yellow-400 uppercase tracking-wider shrink-0 glow-yellow">
-                Builder
-              </span>
-            </div>
-            <p className="text-yellow-400/65 text-[10px] sm:text-xs truncate">
-              {localFields.length} {localFields.length === 1 ? "field" : "fields"} configured
+            <h1 className="truncate text-sm font-medium">{formTitle}</h1>
+            <p className="truncate text-xs text-muted-foreground">
+              {localFields.length} {localFields.length === 1 ? "field" : "fields"}
             </p>
           </div>
         </div>
 
-        <div className="flex items-center gap-1.5 sm:gap-2">
-          {/* Responsive Toggle Pills for Mobile / iPad (< lg) */}
-          <div className="flex lg:hidden items-center gap-1 border border-yellow-500/35 p-0.5 rounded-xl bg-zinc-950/70">
-            <button
-              onClick={() => {
-                setMobilePaletteOpen(!mobilePaletteOpen);
-                setMobileInspectorOpen(false);
-              }}
-              className={`px-2 py-1 text-xs font-semibold rounded-lg flex items-center gap-1 transition-all ${
-                mobilePaletteOpen
-                  ? "bg-yellow-400 text-zinc-950 font-black glow-yellow"
-                  : "text-zinc-400 hover:text-yellow-300"
-              }`}
-            >
-              <Sparkles className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">Palette</span>
-            </button>
-            <button
-              onClick={() => {
-                setMobileInspectorOpen(!mobileInspectorOpen);
-                setMobilePaletteOpen(false);
-              }}
-              className={`px-2 py-1 text-xs font-semibold rounded-lg flex items-center gap-1 transition-all ${
-                mobileInspectorOpen
-                  ? "bg-yellow-400 text-zinc-950 font-black glow-yellow"
-                  : "text-zinc-400 hover:text-yellow-300"
-              }`}
-            >
-              <Settings2 className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">Inspector</span>
-            </button>
-          </div>
-
+        <div className="flex shrink-0 items-center gap-1 sm:gap-2">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="lg:hidden"
+            aria-label="Toggle field palette"
+            title="Add fields"
+            onClick={() => {
+              setMobilePaletteOpen(!mobilePaletteOpen);
+              setMobileInspectorOpen(false);
+            }}
+          >
+            <Plus className="size-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="lg:hidden"
+            aria-label="Toggle field settings"
+            title="Field settings"
+            onClick={() => {
+              setMobileInspectorOpen(!mobileInspectorOpen);
+              setMobilePaletteOpen(false);
+            }}
+          >
+            <Settings2 className="size-4" />
+          </Button>
           <Link
             href={`/dashboard/forms/${formId}/submissions`}
-            className="flex items-center gap-1.5 hover:bg-amber-500/10 px-2.5 sm:px-3 py-1.5 border border-amber-500/35 rounded-xl font-bold text-xs text-amber-300 hover:border-amber-500/55 transition-all shrink-0"
+            className={buttonClass("ghost", "sm")}
+            aria-label="Responses"
           >
-            <Inbox className="w-3.5 h-3.5" />
-            <span className="hidden md:inline">Submissions</span>
+            <Inbox className="size-4" />
+            <span className="hidden md:inline">Responses</span>
           </Link>
-          <Link
-            href={`/forms/${formId}`}
-            target="_blank"
-            className="flex items-center gap-1.5 bg-gradient-to-r from-yellow-400 via-yellow-500 to-amber-500 hover:brightness-110 shadow-lg shadow-yellow-500/25 glow-yellow px-2.5 sm:px-3.5 py-1.5 rounded-xl font-black text-zinc-950 text-xs transition-all shrink-0"
-          >
-            <Eye className="w-3.5 h-3.5" />
+          <CopyLinkButton formId={formId} showLabel />
+          <Link href={`/forms/${formId}`} target="_blank" className={buttonClass("primary", "sm")} aria-label="Preview">
+            <Eye className="size-4" />
             <span className="hidden md:inline">Preview</span>
           </Link>
         </div>
       </header>
 
-      {/* Responsive 3-Column Workspace across all breakpoints (sm, md, lg, xl) */}
-      <div className="relative flex flex-1 min-h-0 overflow-hidden">
-        {/* ================= LEFT PALETTE (Field Library) ================= */}
-        {/* Overlay Backdrop for Mobile / iPad */}
+      <div className="relative flex min-h-0 flex-1 overflow-hidden">
+        {/* ================= LEFT PALETTE ================= */}
         {mobilePaletteOpen && (
-          <div
-            onClick={() => setMobilePaletteOpen(false)}
-            className="lg:hidden fixed inset-0 bg-black/75 backdrop-blur-sm z-30 transition-opacity"
-          />
+          <div onClick={() => setMobilePaletteOpen(false)} className="fixed inset-0 z-30 bg-black/40 lg:hidden" />
         )}
 
         <aside
-          className={`flex flex-col bg-zinc-900/95 backdrop-blur-md border-yellow-500/25 border-r w-72 md:w-80 lg:w-64 xl:w-80 overflow-hidden shrink-0 transition-all duration-300 z-40 ${
-            mobilePaletteOpen
-              ? "fixed inset-y-0 left-0 shadow-2xl shadow-yellow-950"
-              : "hidden lg:flex lg:relative"
-          }`}
+          className={cn(
+            "z-40 w-64 shrink-0 flex-col overflow-hidden border-r bg-background",
+            mobilePaletteOpen ? "fixed inset-y-0 left-0 flex shadow-xl" : "hidden lg:relative lg:flex",
+          )}
         >
-          {/* Palette Search Header */}
-          <div className="space-y-3 p-4 border-yellow-500/25 border-b">
-            <div className="flex justify-between items-center">
-              <h2 className="flex items-center gap-1.5 font-black text-yellow-400 text-xs uppercase tracking-wider">
-                <Sparkles className="w-3.5 h-3.5 text-yellow-400" />
-                Field Palette
-              </h2>
-              <div className="flex items-center gap-1.5">
-                <span className="bg-yellow-500/10 border border-yellow-500/25 px-1.5 py-0.5 rounded text-[10px] text-yellow-300 font-semibold">
-                  Drag / Click
-                </span>
-                <button
-                  onClick={() => setMobilePaletteOpen(false)}
-                  className="lg:hidden p-1 text-zinc-400 hover:text-zinc-200 rounded"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
+          <div className="space-y-3 p-3">
+            <div className="flex items-center justify-between px-1">
+              <h2 className="text-[13px] font-medium">Add a field</h2>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="size-6 lg:hidden"
+                onClick={() => setMobilePaletteOpen(false)}
+                aria-label="Close palette"
+              >
+                <X className="size-4" />
+              </Button>
             </div>
             <div className="relative">
-              <Search className="top-2.5 left-3 absolute w-4 h-4 text-yellow-400/65" />
+              <Search className="absolute top-1/2 left-3 size-3.5 -translate-y-1/2 text-muted-foreground" />
               <input
                 type="text"
-                placeholder="Search field types..."
+                placeholder="Search fields"
+                aria-label="Search field types"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="bg-zinc-950/85 py-2 pr-3 pl-9 border border-yellow-500/35 rounded-xl focus:outline-none focus:ring-2 focus:ring-yellow-500/50 focus:border-yellow-400 w-full text-zinc-100 text-xs transition-all placeholder:text-zinc-500"
+                className={cn(inputClass, "pr-8 pl-9 text-[13px]")}
               />
               {searchQuery && (
                 <button
                   onClick={() => setSearchQuery("")}
-                  className="top-2.5 right-2.5 absolute text-zinc-400 hover:text-yellow-300 text-xs"
+                  className="absolute top-1/2 right-2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  aria-label="Clear search"
                 >
-                  Clear
+                  <X className="size-3.5" />
                 </button>
               )}
             </div>
           </div>
 
-          {/* Palette Items Scroll Area */}
-          <div className="flex-1 space-y-6 p-4 overflow-y-auto">
-            {/* Category 1: Text Fields */}
-            {textCategoryItems.length > 0 && (
-              <div className="space-y-2">
-                <h3 className="px-1 font-bold text-yellow-400/85 text-xs uppercase tracking-wider">
-                  Text Fields
-                </h3>
-                <div className="space-y-2">
-                  {textCategoryItems.map((item) => {
-                    const IconComponent = item.icon;
-                    return (
-                      <div
-                        key={item.id}
-                        draggable
-                        onDragStart={(e) => handleDragStart(e, item)}
-                        onClick={() => handleAddField(item)}
-                        className="group flex justify-between items-center bg-zinc-950/70 hover:bg-yellow-500/10 p-3 border border-yellow-500/20 hover:border-yellow-400/60 rounded-xl transition-all cursor-grab active:cursor-grabbing select-none hover:shadow-md hover:shadow-yellow-950"
-                      >
-                        <div className="flex items-center gap-3 min-w-0">
-                          <div className="bg-yellow-500/10 border border-yellow-500/30 group-hover:bg-yellow-400 p-2 rounded-lg text-yellow-400 group-hover:text-zinc-950 transition-colors shrink-0">
-                            <IconComponent className="w-4 h-4" />
-                          </div>
-                          <div className="min-w-0">
-                            <p className="font-semibold text-zinc-100 text-xs truncate group-hover:text-yellow-300">
-                              {item.label}
-                            </p>
-                            <p className="text-[10px] text-zinc-400 truncate">
-                              {item.description}
-                            </p>
-                          </div>
-                        </div>
-                        <Plus className="opacity-0 group-hover:opacity-100 w-4 h-4 text-yellow-400 transition-opacity shrink-0" />
-                      </div>
-                    );
-                  })}
-                </div>
+          <div className="flex-1 space-y-5 overflow-y-auto px-3 pb-4">
+            {paletteGroups.map((group) => (
+              <div key={group.id}>
+                <h3 className="mb-1 px-1 text-xs text-muted-foreground">{group.label}</h3>
+                {group.items.map((item) => {
+                  const Icon = item.icon;
+                  return (
+                    <button
+                      type="button"
+                      key={item.id}
+                      draggable
+                      onDragStart={(e) => handleDragStart(e, item)}
+                      onClick={() => handleAddField(item)}
+                      title={item.description}
+                      className="group flex w-full cursor-grab items-center gap-2.5 rounded-lg border border-transparent px-1.5 py-1.5 text-left text-[13px] transition-colors select-none hover:border-border hover:bg-card active:cursor-grabbing"
+                    >
+                      <span className="flex size-7 shrink-0 items-center justify-center rounded-md bg-muted text-muted-foreground transition-colors group-hover:bg-brand-soft group-hover:text-brand">
+                        <Icon className="size-3.5" />
+                      </span>
+                      <span className="flex-1 truncate">{item.label}</span>
+                      <Plus className="size-3.5 text-muted-foreground opacity-0 group-hover:opacity-100" />
+                    </button>
+                  );
+                })}
               </div>
-            )}
-
-            {/* Category 2: Inputs & Options */}
-            {inputCategoryItems.length > 0 && (
-              <div className="space-y-2">
-                <h3 className="px-1 font-bold text-yellow-400/85 text-xs uppercase tracking-wider">
-                  Inputs & Options
-                </h3>
-                <div className="space-y-2">
-                  {inputCategoryItems.map((item) => {
-                    const IconComponent = item.icon;
-                    return (
-                      <div
-                        key={item.id}
-                        draggable
-                        onDragStart={(e) => handleDragStart(e, item)}
-                        onClick={() => handleAddField(item)}
-                        className="group flex justify-between items-center bg-zinc-950/70 hover:bg-yellow-500/10 p-3 border border-yellow-500/20 hover:border-yellow-400/60 rounded-xl transition-all cursor-grab active:cursor-grabbing select-none hover:shadow-md hover:shadow-yellow-950"
-                      >
-                        <div className="flex items-center gap-3 min-w-0">
-                          <div className="bg-yellow-500/10 border border-yellow-500/30 group-hover:bg-yellow-400 p-2 rounded-lg text-yellow-400 group-hover:text-zinc-950 transition-colors shrink-0">
-                            <IconComponent className="w-4 h-4" />
-                          </div>
-                          <div className="min-w-0">
-                            <p className="font-semibold text-zinc-100 text-xs truncate group-hover:text-yellow-300">
-                              {item.label}
-                            </p>
-                            <p className="text-[10px] text-zinc-400 truncate">
-                              {item.description}
-                            </p>
-                          </div>
-                        </div>
-                        <Plus className="opacity-0 group-hover:opacity-100 w-4 h-4 text-yellow-400 transition-opacity shrink-0" />
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-
-            {/* Category 3: Advanced Fields */}
-            {advancedCategoryItems.length > 0 && (
-              <div className="space-y-2">
-                <h3 className="px-1 font-bold text-yellow-400/85 text-xs uppercase tracking-wider">
-                  Advanced Fields
-                </h3>
-                <div className="space-y-2">
-                  {advancedCategoryItems.map((item) => {
-                    const IconComponent = item.icon;
-                    return (
-                      <div
-                        key={item.id}
-                        draggable
-                        onDragStart={(e) => handleDragStart(e, item)}
-                        onClick={() => handleAddField(item)}
-                        className="group flex justify-between items-center bg-zinc-950/70 hover:bg-yellow-500/10 p-3 border border-yellow-500/20 hover:border-yellow-400/60 rounded-xl transition-all cursor-grab active:cursor-grabbing select-none hover:shadow-md hover:shadow-yellow-950"
-                      >
-                        <div className="flex items-center gap-3 min-w-0">
-                          <div className="bg-yellow-500/10 border border-yellow-500/30 group-hover:bg-yellow-400 p-2 rounded-lg text-yellow-400 group-hover:text-zinc-950 transition-colors shrink-0">
-                            <IconComponent className="w-4 h-4" />
-                          </div>
-                          <div className="min-w-0">
-                            <p className="font-semibold text-zinc-100 text-xs truncate group-hover:text-yellow-300">
-                              {item.label}
-                            </p>
-                            <p className="text-[10px] text-zinc-400 truncate">
-                              {item.description}
-                            </p>
-                          </div>
-                        </div>
-                        <Plus className="opacity-0 group-hover:opacity-100 w-4 h-4 text-yellow-400 transition-opacity shrink-0" />
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
+            ))}
 
             {filteredPalette.length === 0 && (
-              <div className="p-8 text-zinc-400 text-xs text-center">
-                No field types matching "{searchQuery}"
-              </div>
+              <p className="py-8 text-center text-xs text-muted-foreground">No fields match “{searchQuery}”.</p>
             )}
           </div>
         </aside>
 
-        {/* ================= CENTER CANVAS (Form Preview & Dropzone) ================= */}
+        {/* ================= CENTER CANVAS ================= */}
         <main
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
           onDrop={handleDrop}
-          className={`flex-1 overflow-y-auto p-4 sm:p-6 md:p-8 transition-colors min-w-0 w-full bg-[#09090b] ${
-            isDragOver ? "bg-yellow-950/30 ring-2 ring-yellow-500 ring-inset" : ""
-          }`}
+          className={cn(
+            "bg-dots w-full min-w-0 flex-1 overflow-y-auto px-4 py-8 transition-colors sm:px-8",
+            isDragOver && "bg-brand-soft",
+          )}
         >
-          <div className="space-y-4 sm:space-y-6 mx-auto max-w-2xl lg:max-w-3xl">
-            {/* Form Title & Description Header Card (Editable) */}
-            <div className="relative space-y-3 bg-zinc-900/95 shadow-xl shadow-yellow-950/50 p-4 sm:p-6 border border-yellow-500/30 rounded-2xl overflow-hidden backdrop-blur-md">
-              <div className="top-0 right-0 left-0 absolute bg-gradient-to-r from-yellow-400 via-amber-500 to-yellow-500 h-1.5" />
-              
+          <div className="window mx-auto max-w-xl">
+            <div className="titlebar" aria-hidden>
+              <span className="size-3.5 shrink-0 border border-ink bg-card dark:border-input" />
+              <span className="mx-auto max-w-[70%] truncate bg-card px-3 font-mono text-xs">{formTitle}.frm</span>
+              <span className="size-3.5 shrink-0" />
+            </div>
+            {/* Form header */}
+            <div className="border-b px-6 py-6">
               {isEditingFormHeader ? (
-                <div className="space-y-3 pt-1">
-                  <div>
-                    <label className="block mb-1 font-bold text-yellow-400/85 text-xs uppercase">
-                      Form Title
-                    </label>
-                    <input
-                      type="text"
-                      value={formTitle}
-                      onChange={(e) => setFormTitle(e.target.value)}
-                      className="bg-zinc-950 px-3 py-1.5 border border-yellow-500/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-yellow-500 w-full font-bold text-base sm:text-lg text-zinc-100"
-                      placeholder="Form Title..."
-                    />
-                  </div>
-                  <div>
-                    <label className="block mb-1 font-bold text-yellow-400/85 text-xs uppercase">
-                      Form Description
-                    </label>
-                    <textarea
-                      value={formDescription}
-                      onChange={(e) => setFormDescription(e.target.value)}
-                      rows={2}
-                      className="bg-zinc-950 px-3 py-1.5 border border-yellow-500/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-yellow-500 w-full text-xs text-zinc-100"
-                      placeholder="Form description..."
-                    />
-                  </div>
-                  <div className="flex items-center gap-2 pt-1">
-                    <button
-                      onClick={handleSaveFormHeader}
-                      disabled={isSavingFormHeader}
-                      className="flex items-center gap-1.5 bg-gradient-to-r from-yellow-400 to-amber-500 font-black text-zinc-950 px-3.5 py-1.5 rounded-lg text-xs shadow-md glow-yellow"
-                    >
-                      {isSavingFormHeader ? (
-                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                      ) : (
-                        <Check className="w-3.5 h-3.5" />
-                      )}
-                      Save Header
-                    </button>
-                    <button
+                <div className="space-y-3">
+                  <input
+                    type="text"
+                    aria-label="Form title"
+                    maxLength={55}
+                    value={formTitle}
+                    onChange={(e) => setFormTitle(e.target.value)}
+                    className={cn(inputClass, "font-display text-2xl")}
+                    placeholder="Form title"
+                  />
+                  <textarea
+                    aria-label="Form description"
+                    maxLength={300}
+                    value={formDescription}
+                    onChange={(e) => setFormDescription(e.target.value)}
+                    rows={2}
+                    className={cn(inputClass, "resize-none")}
+                    placeholder="Description"
+                  />
+                  <div className="flex gap-2">
+                    <Button size="sm" onClick={handleSaveFormHeader} disabled={isSavingFormHeader}>
+                      {isSavingFormHeader ? <Loader2 className="size-3.5 animate-spin" /> : <Check className="size-3.5" />}
+                      Save
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
                       onClick={() => {
                         setFormTitle(form.title || "");
                         setFormDescription(form.description || "");
                         setIsEditingFormHeader(false);
                       }}
-                      className="hover:bg-zinc-800 px-3 py-1.5 border border-yellow-500/20 rounded-lg text-zinc-300 font-medium text-xs"
                     >
                       Cancel
-                    </button>
+                    </Button>
                   </div>
                 </div>
               ) : (
-                <div className="group/header flex justify-between items-start gap-3 sm:gap-4">
-                  <div className="space-y-1 min-w-0">
-                    <h2 className="font-black text-xl sm:text-2xl tracking-tight truncate text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 via-amber-300 to-yellow-500">
-                      {formTitle}
-                    </h2>
-                    <p className="text-zinc-400 text-xs sm:text-sm">
-                      {formDescription || "Click edit to add a description for this form."}
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <h2 className="font-display text-3xl leading-tight break-words">{formTitle}</h2>
+                    <p className="mt-1 text-sm break-words text-muted-foreground">
+                      {formDescription || "Add a description."}
                     </p>
                   </div>
-                  <button
+                  <Button
+                    variant="ghost"
+                    size="icon"
                     onClick={() => setIsEditingFormHeader(true)}
-                    className="flex items-center gap-1.5 hover:bg-yellow-500/10 px-2.5 sm:px-3 py-1.5 border border-yellow-500/35 rounded-xl font-medium text-yellow-400 hover:text-yellow-300 text-xs transition-all shrink-0"
-                    title="Edit Title & Description"
+                    title="Edit title and description"
+                    aria-label="Edit title and description"
                   >
-                    <Pencil className="w-3.5 h-3.5" />
-                    <span className="hidden sm:inline">Edit Header</span>
-                  </button>
+                    <Pencil className="size-4" />
+                  </Button>
                 </div>
               )}
             </div>
 
-            {/* Dropzone / Fields List Container */}
-            <div className="space-y-4">
-              <div className="flex justify-between items-center px-1">
-                <span className="font-bold text-yellow-400/85 text-xs uppercase tracking-wider">
-                  Form Elements ({localFields.length})
-                </span>
-                {isCreatingField && (
-                  <span className="flex items-center gap-1.5 text-yellow-400 text-xs">
-                    <Loader2 className="w-3.5 h-3.5 animate-spin" /> Adding field...
-                  </span>
-                )}
-              </div>
-
+            {/* Fields */}
+            <div className="p-3">
               {localFields.length === 0 ? (
-                /* Empty Canvas Dropzone Prompt */
                 <div
                   onDragOver={handleDragOver}
                   onDrop={handleDrop}
-                  className={`rounded-2xl border-2 border-dashed p-8 sm:p-12 text-center space-y-3 transition-all select-none ${
-                    isDragOver
-                      ? "border-yellow-400 bg-yellow-950/40 text-yellow-300 scale-[1.01] glow-border-yellow"
-                      : "border-yellow-500/35 bg-zinc-900/60 text-zinc-400"
-                  }`}
+                  className={cn(
+                    "rounded-xl border border-dashed px-6 py-14 text-center select-none",
+                    isDragOver && "border-brand bg-brand-soft",
+                  )}
                 >
-                  <div className="flex justify-center items-center bg-yellow-500/10 border border-yellow-500/30 mx-auto rounded-2xl w-10 h-10 sm:w-12 sm:h-12 text-yellow-400 glow-yellow">
-                    <Layers className="w-5 h-5 sm:w-6 sm:h-6" />
-                  </div>
-                  <div>
-                    <h3 className="font-bold text-zinc-200 text-xs sm:text-sm">Canvas is Empty</h3>
-                    <p className="mx-auto mt-1 max-w-sm text-zinc-400 text-[11px] sm:text-xs">
-                      Drag fields from the left panel or click any field category to start building your form schema.
-                    </p>
-                  </div>
+                  <p className="font-display text-2xl">Start with a question</p>
+                  <p className="mx-auto mt-1 max-w-xs text-[13px] text-muted-foreground">
+                    Drag a field here, or click one in the list.
+                  </p>
                 </div>
               ) : (
-                /* Fields List Cards */
-                <div className="space-y-3">
+                <div className="space-y-1">
                   {localFields.map((field, index) => {
-                    const FieldIcon = getFieldIcon(field.type, field.label);
                     const isSelected = selectedFieldId === field.id;
+                    const lower = field.label.toLowerCase();
 
                     return (
                       <div
@@ -910,117 +770,107 @@ export default function FormDetailsPage({ params }: FormDetailsPageProps) {
                         onDragLeave={() => setDragOverCardIndex(null)}
                         onDrop={(e) => handleCanvasCardDrop(e, index)}
                         onClick={() => handleSelectField(field.id)}
-                        className={`group relative p-4 sm:p-5 rounded-2xl border transition-all cursor-pointer select-none ${
-                          dragOverCardIndex === index
-                            ? "border-amber-400 ring-2 ring-amber-500/40 bg-zinc-900 border-t-4 glow-border-amber"
-                            : isSelected
-                            ? "border-yellow-400 ring-2 ring-yellow-500/35 bg-zinc-900/95 shadow-xl shadow-yellow-950/60 glow-border-yellow"
-                            : "border-zinc-800 bg-zinc-900/85 hover:border-yellow-500/35 hover:shadow-lg hover:shadow-yellow-950/40"
-                        }`}
+                        className={cn(
+                          "group relative cursor-pointer rounded-xl border border-transparent py-4 pr-4 pl-8 transition-colors select-none",
+                          isSelected ? "border-dashed border-brand bg-brand-soft/50" : "hover:border-border",
+                          dragOverCardIndex === index && "border-dashed border-brand",
+                        )}
                       >
-                        {/* Card Header & Controls */}
-                        <div className="flex justify-between items-center mb-3">
-                          <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
-                            <GripVertical className="w-4 h-4 text-zinc-600 group-hover:text-yellow-400 cursor-grab shrink-0 transition-colors" />
-                            <div className="bg-yellow-500/10 border border-yellow-500/30 p-1.5 rounded-lg text-yellow-400 shrink-0">
-                              <FieldIcon className="w-4 h-4 text-yellow-400" />
-                            </div>
-                            <div className="min-w-0">
-                              <span className="flex items-center gap-1.5 font-extrabold text-zinc-100 text-xs sm:text-sm truncate">
-                                {field.label}
-                                {field.isRequired && (
-                                  <span className="font-bold text-rose-400 text-xs" title="Required">
-                                    *
-                                  </span>
-                                )}
-                              </span>
-                            </div>
-                          </div>
+                        <GripVertical className="absolute top-4.5 left-2 size-4 cursor-grab text-muted-foreground/40 group-hover:text-muted-foreground" />
 
-                          <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
-                            <span className="bg-zinc-950 border border-yellow-500/30 px-2 py-0.5 rounded-full font-bold text-[10px] text-yellow-400 uppercase">
-                              {field.type}
-                            </span>
-                            <button
+                        <div className="flex items-start justify-between gap-2">
+                          <button
+                            type="button"
+                            className="min-w-0 text-left text-sm font-medium break-words"
+                            aria-pressed={isSelected}
+                          >
+                            <span className="mr-2 font-mono text-xs text-muted-foreground">{index + 1}.</span>
+                            {field.label}
+                            {field.isRequired && (
+                              <span className="ml-1 text-brand" title="Required">
+                                *
+                              </span>
+                            )}
+                          </button>
+
+                          <div
+                            className={cn(
+                              "-my-1 flex shrink-0 items-center transition-opacity",
+                              !isSelected && "lg:opacity-0 lg:group-hover:opacity-100 lg:focus-within:opacity-100",
+                            )}
+                          >
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="size-7 lg:hidden"
                               onClick={(e) => {
                                 e.stopPropagation();
                                 handleSelectField(field.id);
-                                if (typeof window !== "undefined" && window.innerWidth < 1024) {
-                                  setMobileInspectorOpen(true);
-                                }
+                                setMobileInspectorOpen(true);
                               }}
-                              title="Edit field properties"
-                              className="hover:bg-yellow-500/20 p-1.5 rounded-lg text-zinc-400 hover:text-yellow-300 transition-colors"
+                              title="Field settings"
+                              aria-label="Field settings"
                             >
-                              <Pencil className="w-3.5 h-3.5" />
-                            </button>
-                            <button
+                              <Pencil className="size-3.5" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="size-7"
                               onClick={(e) => {
                                 e.stopPropagation();
                                 handleDuplicateField(field);
                               }}
                               disabled={isCreatingField}
                               title="Duplicate field"
-                              className="hover:bg-yellow-500/20 p-1.5 rounded-lg text-zinc-400 hover:text-yellow-300 transition-colors"
+                              aria-label="Duplicate field"
                             >
-                              <Copy className="w-3.5 h-3.5" />
-                            </button>
-                            <button
+                              <Copy className="size-3.5" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="size-7 hover:text-destructive"
                               onClick={(e) => {
                                 e.stopPropagation();
                                 handleDeleteField(field.id);
                               }}
                               disabled={isDeletingField}
                               title="Delete field"
-                              className="hover:bg-rose-500/20 p-1.5 rounded-lg text-zinc-400 hover:text-rose-400 transition-colors"
+                              aria-label="Delete field"
                             >
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </button>
+                              <Trash2 className="size-3.5" />
+                            </Button>
                           </div>
                         </div>
 
-                        {/* Interactive UI Preview Mockup */}
-                        <div className="space-y-2 pl-6 sm:pl-7 pointer-events-none">
-                          {field.description && (
-                            <p className="text-zinc-400 text-[11px] sm:text-xs">{field.description}</p>
-                          )}
+                        {/* Preview of what respondents see */}
+                        <div className="pointer-events-none mt-1 space-y-2">
+                          {field.description && <p className="text-xs text-muted-foreground">{field.description}</p>}
 
-                          {/* Render actual UI input widget preview based on field type */}
-                          {field.type === "TEXT" && field.label.toLowerCase().includes("date") ? (
-                            <div className="flex justify-between items-center bg-zinc-950 px-3 py-2 border border-yellow-500/25 rounded-xl w-full text-zinc-400 text-xs">
+                          {field.type === "TEXT" && lower.includes("date") ? (
+                            <div className={cn(previewInput, "flex items-center justify-between text-muted-foreground/60")}>
                               <span>{field.placeholder || "YYYY-MM-DD"}</span>
-                              <Calendar className="w-4 h-4 text-yellow-400" />
+                              <Calendar className="size-4" />
                             </div>
-                          ) : field.type === "TEXT" &&
-                            (field.label.toLowerCase().includes("file") ||
-                              field.label.toLowerCase().includes("upload")) ? (
-                            <div className="space-y-1 bg-zinc-950/70 p-3 sm:p-4 border border-yellow-500/35 border-dashed rounded-xl w-full text-center">
-                              <UploadCloud className="mx-auto w-5 h-5 text-yellow-400" />
-                              <p className="text-zinc-400 text-xs">
-                                {field.placeholder || "Click or drag file to attach"}
-                              </p>
-                            </div>
+                          ) : field.type === "TEXT" && (lower.includes("file") || lower.includes("upload")) ? (
+                            // File uploads aren't supported yet: respondents get a text box, so preview one.
+                            <input readOnly tabIndex={-1} placeholder={field.placeholder || ""} className={previewInput} />
                           ) : field.type === "YES_NO" ? (
-                            <div className="flex items-center gap-4 pt-1">
-                              <label className="flex items-center gap-2 text-zinc-400 text-xs">
-                                <input type="radio" disabled name={`preview_${field.id}`} className="text-yellow-400" /> Yes
-                              </label>
-                              <label className="flex items-center gap-2 text-zinc-400 text-xs">
-                                <input type="radio" disabled name={`preview_${field.id}`} className="text-yellow-400" /> No
-                              </label>
+                            <div className="grid grid-cols-2 gap-2">
+                              {["Yes", "No"].map((option) => (
+                                <span key={option} className={cn(previewInput, "text-muted-foreground")}>
+                                  {option}
+                                </span>
+                              ))}
                             </div>
                           ) : (
                             <input
-                              type={
-                                field.type === "PASSWORD"
-                                  ? "password"
-                                  : field.type === "NUMBER"
-                                  ? "number"
-                                  : "text"
-                              }
+                              type={field.type === "PASSWORD" ? "password" : "text"}
                               readOnly
-                              placeholder={field.placeholder || `Enter ${field.label.toLowerCase()}...`}
-                              className="bg-zinc-950 px-3 py-2 border border-yellow-500/25 rounded-xl focus:outline-none w-full text-zinc-200 text-xs placeholder:text-zinc-500"
+                              tabIndex={-1}
+                              placeholder={field.placeholder || ""}
+                              className={previewInput}
                             />
                           )}
                         </div>
@@ -1029,170 +879,124 @@ export default function FormDetailsPage({ params }: FormDetailsPageProps) {
                   })}
                 </div>
               )}
+
+              {isCreatingField && (
+                <p className="flex items-center justify-center gap-1.5 py-3 text-xs text-muted-foreground">
+                  <Loader2 className="size-3.5 animate-spin" /> Adding field…
+                </p>
+              )}
             </div>
           </div>
         </main>
 
-        {/* ================= RIGHT FIELD INSPECTOR (Property Editor) ================= */}
-        {/* Overlay Backdrop for Mobile / iPad */}
+        {/* ================= RIGHT INSPECTOR ================= */}
         {mobileInspectorOpen && (
-          <div
-            onClick={() => setMobileInspectorOpen(false)}
-            className="lg:hidden fixed inset-0 bg-black/75 backdrop-blur-sm z-30 transition-opacity"
-          />
+          <div onClick={() => setMobileInspectorOpen(false)} className="fixed inset-0 z-30 bg-black/40 lg:hidden" />
         )}
 
         <aside
-          className={`flex flex-col bg-zinc-900/95 backdrop-blur-md border-yellow-500/25 border-l w-80 lg:w-64 xl:w-80 overflow-hidden shrink-0 transition-all duration-300 z-40 ${
-            mobileInspectorOpen
-              ? "fixed inset-y-0 right-0 shadow-2xl shadow-yellow-950"
-              : "hidden lg:flex lg:relative"
-          }`}
+          className={cn(
+            "z-40 w-72 shrink-0 flex-col overflow-hidden border-l bg-background",
+            mobileInspectorOpen ? "fixed inset-y-0 right-0 flex shadow-xl" : "hidden lg:relative lg:flex",
+          )}
         >
-          <div className="flex justify-between items-center p-4 border-yellow-500/25 border-b min-h-[57px]">
-            <h2 className="flex items-center gap-1.5 font-bold text-yellow-400 text-xs uppercase tracking-wider">
-              <Settings2 className="w-3.5 h-3.5 text-yellow-400" />
-              Field Inspector
-            </h2>
-            <div className="flex items-center gap-2">
-              {selectedField && (
-                <span className="bg-yellow-500/10 border border-yellow-500/35 px-2 py-0.5 rounded-full font-bold text-[10px] text-yellow-400 uppercase glow-yellow">
-                  {selectedField.type}
-                </span>
-              )}
-              <button
-                onClick={() => setMobileInspectorOpen(false)}
-                className="lg:hidden p-1 text-zinc-400 hover:text-zinc-200 rounded"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
+          <div className="flex h-12 shrink-0 items-center justify-between border-b px-4">
+            <h2 className="text-[13px] font-medium">Field settings</h2>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="size-6 lg:hidden"
+              onClick={() => setMobileInspectorOpen(false)}
+              aria-label="Close settings"
+            >
+              <X className="size-4" />
+            </Button>
           </div>
 
-          <div className="flex-1 p-5 overflow-y-auto">
+          <div className="flex-1 overflow-y-auto p-4">
             {selectedField ? (
-              <form onSubmit={handleSaveInspector} className="space-y-5">
-                {/* Field Header */}
-                <div className="flex items-center gap-3 pb-3 border-yellow-500/25 border-b">
-                  <div className="bg-yellow-500/10 border border-yellow-500/35 p-2 rounded-xl text-yellow-400 shrink-0 glow-yellow">
-                    {(() => {
-                      const IconComp = getFieldIcon(selectedField.type, selectedField.label);
-                      return <IconComp className="w-5 h-5" />;
-                    })()}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-bold text-zinc-100 text-xs truncate">
-                      {selectedField.label}
-                    </p>
-                    <p className="font-mono text-[10px] text-yellow-400/65 truncate">
-                      {selectedField.labelKey}
-                    </p>
+              <form onSubmit={handleSaveInspector} className="space-y-4">
+                <div className="flex items-center gap-2.5">
+                  <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-brand-soft text-brand">
+                    <SelectedIcon className="size-4" />
+                  </span>
+                  <div className="min-w-0">
+                    <p className="text-[13px] font-medium">{TYPE_NAMES[selectedField.type]}</p>
+                    <p className="truncate font-mono text-[11px] text-muted-foreground">{selectedField.labelKey}</p>
                   </div>
                 </div>
 
-                {/* Property: Field Label (Live Concurrent Binding) */}
-                <div className="space-y-1.5">
-                  <label className="block font-semibold text-zinc-300 text-xs">
-                    Field Name / Label <span className="text-rose-400">*</span>
-                  </label>
+                <Field label="Label" htmlFor="field-label">
                   <input
+                    id="field-label"
                     type="text"
+                    maxLength={100}
                     value={editLabel}
                     onChange={(e) => handleInspectorLabelChange(e.target.value)}
                     required
-                    placeholder="e.g. Work Email Address"
-                    className="bg-zinc-950 px-3 py-2 border border-yellow-500/35 rounded-xl focus:outline-none focus:ring-2 focus:ring-yellow-500/50 focus:border-yellow-400 w-full text-zinc-100 text-xs transition-all placeholder:text-zinc-500"
+                    placeholder="Work email"
+                    className={inputClass}
                   />
-                </div>
-
-                {/* Property: Help Text / Description (Live Concurrent Binding) */}
-                <div className="space-y-1.5">
-                  <label className="block font-semibold text-zinc-300 text-xs">
-                    Description / Help Text
-                  </label>
+                </Field>
+                <Field label="Help text" htmlFor="field-description">
                   <input
+                    id="field-description"
                     type="text"
                     value={editDescription}
                     onChange={(e) => handleInspectorDescriptionChange(e.target.value)}
-                    placeholder="e.g. We will send confirmation here"
-                    className="bg-zinc-950 px-3 py-2 border border-yellow-500/35 rounded-xl focus:outline-none focus:ring-2 focus:ring-yellow-500/50 focus:border-yellow-400 w-full text-zinc-100 text-xs transition-all placeholder:text-zinc-500"
+                    placeholder="We'll send confirmation here"
+                    className={inputClass}
                   />
-                </div>
-
-                {/* Property: Placeholder Text (Live Concurrent Binding) */}
-                <div className="space-y-1.5">
-                  <label className="block font-semibold text-zinc-300 text-xs">
-                    Placeholder Text
-                  </label>
+                </Field>
+                <Field label="Placeholder" htmlFor="field-placeholder">
                   <input
+                    id="field-placeholder"
                     type="text"
                     value={editPlaceholder}
                     onChange={(e) => handleInspectorPlaceholderChange(e.target.value)}
-                    placeholder="e.g. john@company.com"
-                    className="bg-zinc-950 px-3 py-2 border border-yellow-500/35 rounded-xl focus:outline-none focus:ring-2 focus:ring-yellow-500/50 focus:border-yellow-400 w-full text-zinc-100 text-xs transition-all placeholder:text-zinc-500"
+                    placeholder="name@company.com"
+                    className={inputClass}
                   />
-                </div>
+                </Field>
 
-                {/* Property: Required Flag (Live Concurrent Binding) */}
-                <div className="pt-2 border-yellow-500/25 border-t">
-                  <label className="flex justify-between items-center bg-zinc-950/70 hover:bg-yellow-500/10 p-3 border border-yellow-500/25 rounded-xl transition-colors cursor-pointer">
-                    <div>
-                      <p className="font-semibold text-zinc-200 text-xs">Required Field</p>
-                      <p className="text-[10px] text-zinc-400">Mandatory for submissions</p>
-                    </div>
-                    <input
-                      type="checkbox"
-                      checked={editIsRequired}
-                      onChange={(e) => handleInspectorRequiredChange(e.target.checked)}
-                      className="border-yellow-500/40 rounded focus:ring-yellow-500 w-4 h-4 text-yellow-400 cursor-pointer"
-                    />
-                  </label>
-                </div>
+                <label className="flex cursor-pointer items-center justify-between border-y py-3">
+                  <span className="text-[13px] font-medium">Required</span>
+                  <input
+                    type="checkbox"
+                    role="switch"
+                    checked={editIsRequired}
+                    onChange={(e) => handleInspectorRequiredChange(e.target.checked)}
+                    className="relative h-5 w-9 cursor-pointer appearance-none border border-ink bg-muted after:absolute after:top-px after:left-px after:size-4 after:bg-card after:shadow-[inset_-1px_-1px_0_var(--bevel-dark)] checked:bg-brand checked:after:translate-x-4"
+                  />
+                </label>
 
-                {/* Save Button */}
-                <div className="space-y-2 pt-3">
-                  <button
-                    type="submit"
-                    disabled={isUpdatingField}
-                    className="flex justify-center items-center gap-2 bg-gradient-to-r from-yellow-400 via-yellow-500 to-amber-500 hover:brightness-110 shadow-lg shadow-yellow-500/25 glow-yellow px-4 py-2.5 rounded-xl w-full font-black text-zinc-950 text-xs transition-all"
-                  >
-                    {isUpdatingField ? (
-                      <>
-                        <Loader2 className="w-4 h-4 animate-spin text-zinc-950" /> Saving...
-                      </>
-                    ) : saveSuccess ? (
-                      <>
-                        <Check className="w-4 h-4 text-zinc-950" /> Saved Changes
-                      </>
-                    ) : (
-                      "Save Field Properties"
-                    )}
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => handleDeleteField(selectedField.id)}
-                    disabled={isDeletingField}
-                    className="flex justify-center items-center gap-2 hover:bg-rose-500/20 hover:border-rose-500/40 px-4 py-2 border border-rose-500/20 rounded-xl w-full font-semibold text-rose-400 text-xs transition-all"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                    Delete Field
-                  </button>
-                </div>
+                <Button type="submit" disabled={isUpdatingField} className="w-full">
+                  {isUpdatingField ? (
+                    <>
+                      <Loader2 className="size-4 animate-spin" /> Saving…
+                    </>
+                  ) : saveSuccess ? (
+                    <>
+                      <Check className="size-4" /> Saved
+                    </>
+                  ) : (
+                    "Save changes"
+                  )}
+                </Button>
+                <Button
+                  variant="danger"
+                  size="sm"
+                  className="w-full"
+                  onClick={() => handleDeleteField(selectedField.id)}
+                  disabled={isDeletingField}
+                >
+                  <Trash2 className="size-3.5" /> Delete field
+                </Button>
               </form>
             ) : (
-              /* Empty Inspector Message */
-              <div className="flex flex-col justify-center items-center space-y-3 my-auto p-6 h-full text-zinc-400 text-center">
-                <div className="flex justify-center items-center bg-yellow-500/10 border border-yellow-500/30 rounded-full w-10 h-10 text-yellow-400 glow-yellow">
-                  <Settings2 className="w-5 h-5" />
-                </div>
-                <div>
-                  <p className="font-semibold text-zinc-200 text-xs">No Field Selected</p>
-                  <p className="mt-1 max-w-[200px] text-[11px] text-zinc-400">
-                    Click any field card on the central canvas to inspect and edit its properties.
-                  </p>
-                </div>
-              </div>
+              <p className="px-4 py-16 text-center text-[13px] text-muted-foreground">
+                Select a field on the canvas to edit it.
+              </p>
             )}
           </div>
         </aside>
