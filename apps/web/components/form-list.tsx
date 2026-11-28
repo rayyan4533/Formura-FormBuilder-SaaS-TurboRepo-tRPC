@@ -26,7 +26,7 @@ export function FormList({ forms }: { forms: FormSummary[] }) {
             </span>
           )}
           <div className="flex shrink-0 items-center">
-            <CopyLinkButton formId={form.id} />
+            <CopyLinkButton formId={form.id} formTitle={form.title} />
             <Link
               href={`/dashboard/forms/${form.id}/submissions`}
               className={buttonClass("ghost", "icon")}

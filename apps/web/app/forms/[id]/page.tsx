@@ -52,7 +52,7 @@ export default function PublicFormPage({ params }: PublicFormPageProps) {
   if (isLoading) {
     return (
       <Shell>
-        <div className="h-80 animate-pulse rounded-2xl bg-muted" aria-label="Loading form" />
+        <div className="bg-muted rounded-2xl h-80 animate-pulse" aria-label="Loading form" />
       </Shell>
     );
   }
@@ -71,7 +71,7 @@ export default function PublicFormPage({ params }: PublicFormPageProps) {
         <Notice
           title="Thank you"
           icon={
-            <span className="mx-auto mb-4 flex size-12 items-center justify-center border border-brand bg-brand-soft text-brand">
+            <span className="flex justify-center items-center bg-brand-soft mx-auto mb-4 border border-brand size-12 text-brand">
               <Check className="size-6" />
             </span>
           }
@@ -80,7 +80,7 @@ export default function PublicFormPage({ params }: PublicFormPageProps) {
           <Button
             variant="outline"
             size="sm"
-            className="mx-auto mt-6 flex"
+            className="flex mx-auto mt-6"
             onClick={() => {
               reset();
               setSubmitted(false);
@@ -98,23 +98,23 @@ export default function PublicFormPage({ params }: PublicFormPageProps) {
 
   return (
     <Shell>
-      <Window title={`${form.title}.frm`} bodyClassName="p-6 sm:p-10">
-        <h1 className="font-display text-4xl leading-tight break-words">{form.title}</h1>
+      <Window title={`${form.title}.form`} bodyClassName="p-6 sm:p-10">
+        <h1 className="font-display text-4xl break-words leading-tight">{form.title}</h1>
         {form.description && (
-          <p className="mt-2 text-sm whitespace-pre-wrap text-muted-foreground">{form.description}</p>
+          <p className="mt-2 text-muted-foreground text-sm whitespace-pre-wrap">{form.description}</p>
         )}
 
-        <form onSubmit={handleSubmit(onSubmit)} className="mt-8 space-y-7">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-7 mt-8">
           {submitError && <ErrorNote>{submitError}</ErrorNote>}
 
           {fields.length === 0 ? (
-            <p className="py-6 text-center text-sm text-muted-foreground">This form has no questions yet.</p>
+            <p className="py-6 text-muted-foreground text-sm text-center">This form has no questions yet.</p>
           ) : (
             fields.map((field: any, position: number) => {
               const registration = register(field.id, { required: field.isRequired });
               const label = (
                 <>
-                  <span className="mr-2 font-mono text-xs text-muted-foreground">{position + 1}.</span>
+                  <span className="mr-2 font-mono text-muted-foreground text-xs">{position + 1}.</span>
                   {field.label}
                   {field.isRequired && <span className="ml-1 text-brand">*</span>}
                 </>
@@ -122,18 +122,18 @@ export default function PublicFormPage({ params }: PublicFormPageProps) {
               const help = field.description && (
                 <p className="mt-0.5 text-[13px] text-muted-foreground">{field.description}</p>
               );
-              const message = errors[field.id] && <p className="mt-1.5 text-xs text-destructive">This field is required</p>;
+              const message = errors[field.id] && <p className="mt-1.5 text-destructive text-xs">This field is required</p>;
 
               if (field.type === "YES_NO") {
                 return (
                   <fieldset key={field.id}>
-                    <legend className="text-[15px] font-medium">{label}</legend>
+                    <legend className="font-medium text-[15px]">{label}</legend>
                     {help}
-                    <div className="mt-2.5 grid grid-cols-2 gap-2">
+                    <div className="gap-2 grid grid-cols-2 mt-2.5">
                       {["Yes", "No"].map((option) => (
                         <label
                           key={option}
-                          className="flex cursor-pointer items-center justify-between sunken border border-input px-3 py-2.5 text-sm transition-colors hover:bg-muted has-checked:border-brand has-checked:bg-brand-soft"
+                          className="flex justify-between items-center has-checked:bg-brand-soft hover:bg-muted px-3 py-2.5 border border-input has-checked:border-brand text-sm transition-colors cursor-pointer sunken"
                         >
                           {option}
                           <input type="radio" value={option} className="size-4 accent-brand" {...registration} />
@@ -158,7 +158,7 @@ export default function PublicFormPage({ params }: PublicFormPageProps) {
 
               return (
                 <div key={field.id}>
-                  <label htmlFor={field.id} className="block text-[15px] font-medium">
+                  <label htmlFor={field.id} className="block font-medium text-[15px]">
                     {label}
                   </label>
                   {help}
@@ -190,9 +190,9 @@ export default function PublicFormPage({ params }: PublicFormPageProps) {
 
 function Shell({ children }: { children: React.ReactNode }) {
   return (
-    <div className="bg-dots flex min-h-screen flex-col items-center justify-center px-4 py-12">
+    <div className="flex flex-col justify-center items-center bg-dots px-4 py-12 min-h-screen">
       <main className="w-full max-w-xl">{children}</main>
-      <p className="mt-6 text-xs text-muted-foreground">
+      <p className="mt-6 text-muted-foreground text-xs">
         Made with <span className="font-display text-sm">Formura</span>
       </p>
     </div>
@@ -201,10 +201,10 @@ function Shell({ children }: { children: React.ReactNode }) {
 
 function Notice({ title, icon, children }: { title: string; icon?: React.ReactNode; children: React.ReactNode }) {
   return (
-    <div className="window p-10 text-center">
+    <div className="p-10 text-center window">
       {icon}
       <h1 className="font-display text-3xl">{title}</h1>
-      <div className="mt-2 text-sm text-muted-foreground">{children}</div>
+      <div className="mt-2 text-muted-foreground text-sm">{children}</div>
     </div>
   );
 }

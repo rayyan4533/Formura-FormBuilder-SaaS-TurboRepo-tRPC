@@ -49,7 +49,7 @@ export default function FormSubmissionsPage({ params }: SubmissionsPageProps) {
           subtitle={isLoading || error ? "Responses" : `${count} ${count === 1 ? "response" : "responses"}`}
           action={
             <div className="flex gap-2">
-              <CopyLinkButton formId={formId} showLabel />
+              <CopyLinkButton formId={formId} formTitle={form?.title} showLabel />
               <Button variant="outline" size="sm" onClick={() => refetch()} disabled={isLoadingSubmissions}>
                 <RefreshCw className={cn("size-4", isLoadingSubmissions && "animate-spin")} /> Refresh
               </Button>

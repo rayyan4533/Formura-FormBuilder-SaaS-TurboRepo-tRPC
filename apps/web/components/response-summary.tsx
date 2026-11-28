@@ -33,29 +33,29 @@ export function ResponseSummary({ forms }: { forms: FormSummary[] }) {
 
   return (
     <section className="space-y-3">
-      <div className="flex items-center justify-between">
-        <h2 className="text-[13px] font-medium text-muted-foreground">Responses</h2>
-        {settled && <span className="font-mono text-xs text-muted-foreground">{total} total</span>}
+      <div className="flex justify-between items-center">
+        <h2 className="font-medium text-[13px] text-muted-foreground">Responses</h2>
+        {settled && <span className="font-mono text-muted-foreground text-xs">{total} total</span>}
       </div>
 
       {/* One window per form, spaced apart so each reads as its own record. */}
       <ul className="space-y-6">
         {rows.map(({ form, isLoading, failed, count, latest }) => (
           <li key={form.id}>
-            <Window title={`${form.title}.frm`}>
+            <Window title={`${form.title}.form`}>
               <div className="px-5 py-4">
-                <p className="truncate text-[15px] font-medium">{form.title}</p>
-                <p className="truncate text-[13px] text-muted-foreground">{form.description || "No description"}</p>
+                <p className="font-medium text-[15px] truncate">{form.title}</p>
+                <p className="text-[13px] text-muted-foreground truncate">{form.description || "No description"}</p>
               </div>
-              <div className="flex items-center gap-8 border-t bg-muted/40 px-5 py-3">
-                <dl className="flex min-w-0 flex-1 gap-8">
+              <div className="flex items-center gap-8 bg-muted/40 px-5 py-3 border-t">
+                <dl className="flex flex-1 gap-8 min-w-0">
                   <div>
-                    <dt className="font-mono text-xs text-muted-foreground">Responses</dt>
-                    <dd className="font-mono text-sm tabular-nums">{isLoading ? "…" : failed ? "—" : count}</dd>
+                    <dt className="font-mono text-muted-foreground text-xs">Responses</dt>
+                    <dd className="font-mono tabular-nums text-sm">{isLoading ? "…" : failed ? "—" : count}</dd>
                   </div>
                   <div className="min-w-0">
-                    <dt className="font-mono text-xs text-muted-foreground">Latest</dt>
-                    <dd className="truncate text-sm">
+                    <dt className="font-mono text-muted-foreground text-xs">Latest</dt>
+                    <dd className="text-sm truncate">
                       {isLoading ? "Loading…" : failed ? "Couldn't load" : latest ? format(latest, "MMM d, HH:mm") : "None yet"}
                     </dd>
                   </div>

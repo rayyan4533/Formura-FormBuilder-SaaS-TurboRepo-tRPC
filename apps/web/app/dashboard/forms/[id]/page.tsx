@@ -501,7 +501,7 @@ export default function FormDetailsPage({ params }: FormDetailsPageProps) {
 
   if (isLoading) {
     return (
-      <div className="flex h-screen items-center justify-center gap-2 text-sm text-muted-foreground">
+      <div className="flex justify-center items-center gap-2 h-screen text-muted-foreground text-sm">
         <Loader2 className="size-4 animate-spin" /> Opening builder…
       </div>
     );
@@ -509,9 +509,9 @@ export default function FormDetailsPage({ params }: FormDetailsPageProps) {
 
   if (error || !form) {
     return (
-      <div className="flex h-screen flex-col items-center justify-center gap-2 p-6 text-center">
+      <div className="flex flex-col justify-center items-center gap-2 p-6 h-screen text-center">
         <h2 className="font-display text-3xl">Form not found</h2>
-        <p className="text-sm text-muted-foreground">It doesn't exist or failed to load.</p>
+        <p className="text-muted-foreground text-sm">It doesn't exist or failed to load.</p>
         <Link href="/dashboard/forms" className={buttonClass("outline", "sm", "mt-3")}>
           <ArrowLeft className="size-4" /> Back to forms
         </Link>
@@ -523,23 +523,23 @@ export default function FormDetailsPage({ params }: FormDetailsPageProps) {
   const previewInput = cn(inputClass, "bg-background");
 
   return (
-    <div className="flex h-screen flex-col overflow-hidden">
+    <div className="flex flex-col h-screen overflow-hidden">
       {/* ================= TOP BAR ================= */}
-      <header className="z-20 flex h-14 shrink-0 items-center justify-between gap-2 border-b bg-background px-3 sm:px-4">
-        <div className="flex min-w-0 items-center gap-1 sm:gap-2">
+      <header className="z-20 flex justify-between items-center gap-2 bg-background px-3 sm:px-4 border-b h-14 shrink-0">
+        <div className="flex items-center gap-1 sm:gap-2 min-w-0">
           <DashboardHamburgerToggle className="md:hidden" />
           <Link href="/dashboard/forms" className={buttonClass("ghost", "icon")} title="Back to forms" aria-label="Back to forms">
             <ArrowLeft className="size-4" />
           </Link>
           <div className="min-w-0">
-            <h1 className="truncate text-sm font-medium">{formTitle}</h1>
-            <p className="truncate text-xs text-muted-foreground">
+            <h1 className="font-medium text-sm truncate">{formTitle}</h1>
+            <p className="text-muted-foreground text-xs truncate">
               {localFields.length} {localFields.length === 1 ? "field" : "fields"}
             </p>
           </div>
         </div>
 
-        <div className="flex shrink-0 items-center gap-1 sm:gap-2">
+        <div className="flex items-center gap-1 sm:gap-2 shrink-0">
           <Button
             variant="ghost"
             size="icon"
@@ -574,7 +574,7 @@ export default function FormDetailsPage({ params }: FormDetailsPageProps) {
             <Inbox className="size-4" />
             <span className="hidden md:inline">Responses</span>
           </Link>
-          <CopyLinkButton formId={formId} showLabel />
+          <CopyLinkButton formId={formId} formTitle={formTitle} showLabel />
           <Link href={`/forms/${formId}`} target="_blank" className={buttonClass("primary", "sm")} aria-label="Preview">
             <Eye className="size-4" />
             <span className="hidden md:inline">Preview</span>
@@ -582,25 +582,25 @@ export default function FormDetailsPage({ params }: FormDetailsPageProps) {
         </div>
       </header>
 
-      <div className="relative flex min-h-0 flex-1 overflow-hidden">
+      <div className="relative flex flex-1 min-h-0 overflow-hidden">
         {/* ================= LEFT PALETTE ================= */}
         {mobilePaletteOpen && (
-          <div onClick={() => setMobilePaletteOpen(false)} className="fixed inset-0 z-30 bg-black/40 lg:hidden" />
+          <div onClick={() => setMobilePaletteOpen(false)} className="lg:hidden z-30 fixed inset-0 bg-black/40" />
         )}
 
         <aside
           className={cn(
-            "z-40 w-64 shrink-0 flex-col overflow-hidden border-r bg-background",
+            "z-40 flex-col bg-background border-r w-64 overflow-hidden shrink-0",
             mobilePaletteOpen ? "fixed inset-y-0 left-0 flex shadow-xl" : "hidden lg:relative lg:flex",
           )}
         >
           <div className="space-y-3 p-3">
-            <div className="flex items-center justify-between px-1">
-              <h2 className="text-[13px] font-medium">Add a field</h2>
+            <div className="flex justify-between items-center px-1">
+              <h2 className="font-medium text-[13px]">Add a field</h2>
               <Button
                 variant="ghost"
                 size="icon"
-                className="size-6 lg:hidden"
+                className="lg:hidden size-6"
                 onClick={() => setMobilePaletteOpen(false)}
                 aria-label="Close palette"
               >
@@ -608,7 +608,7 @@ export default function FormDetailsPage({ params }: FormDetailsPageProps) {
               </Button>
             </div>
             <div className="relative">
-              <Search className="absolute top-1/2 left-3 size-3.5 -translate-y-1/2 text-muted-foreground" />
+              <Search className="top-1/2 left-3 absolute size-3.5 text-muted-foreground -translate-y-1/2" />
               <input
                 type="text"
                 placeholder="Search fields"
@@ -620,7 +620,7 @@ export default function FormDetailsPage({ params }: FormDetailsPageProps) {
               {searchQuery && (
                 <button
                   onClick={() => setSearchQuery("")}
-                  className="absolute top-1/2 right-2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  className="top-1/2 right-2 absolute text-muted-foreground hover:text-foreground -translate-y-1/2"
                   aria-label="Clear search"
                 >
                   <X className="size-3.5" />
@@ -629,10 +629,10 @@ export default function FormDetailsPage({ params }: FormDetailsPageProps) {
             </div>
           </div>
 
-          <div className="flex-1 space-y-5 overflow-y-auto px-3 pb-4">
+          <div className="flex-1 space-y-5 px-3 pb-4 overflow-y-auto">
             {paletteGroups.map((group) => (
               <div key={group.id}>
-                <h3 className="mb-1 px-1 text-xs text-muted-foreground">{group.label}</h3>
+                <h3 className="mb-1 px-1 text-muted-foreground text-xs">{group.label}</h3>
                 {group.items.map((item) => {
                   const Icon = item.icon;
                   return (
@@ -643,13 +643,13 @@ export default function FormDetailsPage({ params }: FormDetailsPageProps) {
                       onDragStart={(e) => handleDragStart(e, item)}
                       onClick={() => handleAddField(item)}
                       title={item.description}
-                      className="group flex w-full cursor-grab items-center gap-2.5 rounded-lg border border-transparent px-1.5 py-1.5 text-left text-[13px] transition-colors select-none hover:border-border hover:bg-card active:cursor-grabbing"
+                      className="group flex items-center gap-2.5 hover:bg-card px-1.5 py-1.5 border border-transparent hover:border-border rounded-lg w-full text-[13px] text-left transition-colors cursor-grab active:cursor-grabbing select-none"
                     >
-                      <span className="flex size-7 shrink-0 items-center justify-center rounded-md bg-muted text-muted-foreground transition-colors group-hover:bg-brand-soft group-hover:text-brand">
+                      <span className="flex justify-center items-center bg-muted group-hover:bg-brand-soft rounded-md size-7 text-muted-foreground group-hover:text-brand transition-colors shrink-0">
                         <Icon className="size-3.5" />
                       </span>
                       <span className="flex-1 truncate">{item.label}</span>
-                      <Plus className="size-3.5 text-muted-foreground opacity-0 group-hover:opacity-100" />
+                      <Plus className="opacity-0 group-hover:opacity-100 size-3.5 text-muted-foreground" />
                     </button>
                   );
                 })}
@@ -657,7 +657,7 @@ export default function FormDetailsPage({ params }: FormDetailsPageProps) {
             ))}
 
             {filteredPalette.length === 0 && (
-              <p className="py-8 text-center text-xs text-muted-foreground">No fields match “{searchQuery}”.</p>
+              <p className="py-8 text-muted-foreground text-xs text-center">No fields match “{searchQuery}”.</p>
             )}
           </div>
         </aside>
@@ -668,18 +668,18 @@ export default function FormDetailsPage({ params }: FormDetailsPageProps) {
           onDragLeave={handleDragLeave}
           onDrop={handleDrop}
           className={cn(
-            "bg-dots w-full min-w-0 flex-1 overflow-y-auto px-4 py-8 transition-colors sm:px-8",
+            "flex-1 bg-dots px-4 sm:px-8 py-8 w-full min-w-0 overflow-y-auto transition-colors",
             isDragOver && "bg-brand-soft",
           )}
         >
-          <div className="window mx-auto max-w-xl">
+          <div className="mx-auto max-w-xl window">
             <div className="titlebar" aria-hidden>
-              <span className="size-3.5 shrink-0 border border-ink bg-card dark:border-input" />
-              <span className="mx-auto max-w-[70%] truncate bg-card px-3 font-mono text-xs">{formTitle}.frm</span>
+              <span className="bg-card border border-ink dark:border-input size-3.5 shrink-0" />
+              <span className="bg-card mx-auto px-3 max-w-[70%] font-mono text-xs truncate">{formTitle}.form</span>
               <span className="size-3.5 shrink-0" />
             </div>
             {/* Form header */}
-            <div className="border-b px-6 py-6">
+            <div className="px-6 py-6 border-b">
               {isEditingFormHeader ? (
                 <div className="space-y-3">
                   <input
@@ -719,10 +719,10 @@ export default function FormDetailsPage({ params }: FormDetailsPageProps) {
                   </div>
                 </div>
               ) : (
-                <div className="flex items-start justify-between gap-3">
+                <div className="flex justify-between items-start gap-3">
                   <div className="min-w-0">
-                    <h2 className="font-display text-3xl leading-tight break-words">{formTitle}</h2>
-                    <p className="mt-1 text-sm break-words text-muted-foreground">
+                    <h2 className="font-display text-3xl break-words leading-tight">{formTitle}</h2>
+                    <p className="mt-1 text-muted-foreground text-sm break-words">
                       {formDescription || "Add a description."}
                     </p>
                   </div>
@@ -746,7 +746,7 @@ export default function FormDetailsPage({ params }: FormDetailsPageProps) {
                   onDragOver={handleDragOver}
                   onDrop={handleDrop}
                   className={cn(
-                    "rounded-xl border border-dashed px-6 py-14 text-center select-none",
+                    "px-6 py-14 border border-dashed rounded-xl text-center select-none",
                     isDragOver && "border-brand bg-brand-soft",
                   )}
                 >
@@ -771,20 +771,20 @@ export default function FormDetailsPage({ params }: FormDetailsPageProps) {
                         onDrop={(e) => handleCanvasCardDrop(e, index)}
                         onClick={() => handleSelectField(field.id)}
                         className={cn(
-                          "group relative cursor-pointer rounded-xl border border-transparent py-4 pr-4 pl-8 transition-colors select-none",
+                          "group relative py-4 pr-4 pl-8 border border-transparent rounded-xl transition-colors cursor-pointer select-none",
                           isSelected ? "border-dashed border-brand bg-brand-soft/50" : "hover:border-border",
                           dragOverCardIndex === index && "border-dashed border-brand",
                         )}
                       >
-                        <GripVertical className="absolute top-4.5 left-2 size-4 cursor-grab text-muted-foreground/40 group-hover:text-muted-foreground" />
+                        <GripVertical className="top-4.5 left-2 absolute size-4 text-muted-foreground/40 group-hover:text-muted-foreground cursor-grab" />
 
-                        <div className="flex items-start justify-between gap-2">
+                        <div className="flex justify-between items-start gap-2">
                           <button
                             type="button"
-                            className="min-w-0 text-left text-sm font-medium break-words"
+                            className="min-w-0 font-medium text-sm text-left break-words"
                             aria-pressed={isSelected}
                           >
-                            <span className="mr-2 font-mono text-xs text-muted-foreground">{index + 1}.</span>
+                            <span className="mr-2 font-mono text-muted-foreground text-xs">{index + 1}.</span>
                             {field.label}
                             {field.isRequired && (
                               <span className="ml-1 text-brand" title="Required">
@@ -795,14 +795,14 @@ export default function FormDetailsPage({ params }: FormDetailsPageProps) {
 
                           <div
                             className={cn(
-                              "-my-1 flex shrink-0 items-center transition-opacity",
+                              "flex items-center -my-1 transition-opacity shrink-0",
                               !isSelected && "lg:opacity-0 lg:group-hover:opacity-100 lg:focus-within:opacity-100",
                             )}
                           >
                             <Button
                               variant="ghost"
                               size="icon"
-                              className="size-7 lg:hidden"
+                              className="lg:hidden size-7"
                               onClick={(e) => {
                                 e.stopPropagation();
                                 handleSelectField(field.id);
@@ -845,8 +845,8 @@ export default function FormDetailsPage({ params }: FormDetailsPageProps) {
                         </div>
 
                         {/* Preview of what respondents see */}
-                        <div className="pointer-events-none mt-1 space-y-2">
-                          {field.description && <p className="text-xs text-muted-foreground">{field.description}</p>}
+                        <div className="space-y-2 mt-1 pointer-events-none">
+                          {field.description && <p className="text-muted-foreground text-xs">{field.description}</p>}
 
                           {field.type === "TEXT" && lower.includes("date") ? (
                             <div className={cn(previewInput, "flex items-center justify-between text-muted-foreground/60")}>
@@ -857,7 +857,7 @@ export default function FormDetailsPage({ params }: FormDetailsPageProps) {
                             // File uploads aren't supported yet: respondents get a text box, so preview one.
                             <input readOnly tabIndex={-1} placeholder={field.placeholder || ""} className={previewInput} />
                           ) : field.type === "YES_NO" ? (
-                            <div className="grid grid-cols-2 gap-2">
+                            <div className="gap-2 grid grid-cols-2">
                               {["Yes", "No"].map((option) => (
                                 <span key={option} className={cn(previewInput, "text-muted-foreground")}>
                                   {option}
@@ -881,7 +881,7 @@ export default function FormDetailsPage({ params }: FormDetailsPageProps) {
               )}
 
               {isCreatingField && (
-                <p className="flex items-center justify-center gap-1.5 py-3 text-xs text-muted-foreground">
+                <p className="flex justify-center items-center gap-1.5 py-3 text-muted-foreground text-xs">
                   <Loader2 className="size-3.5 animate-spin" /> Adding field…
                 </p>
               )}
@@ -891,21 +891,21 @@ export default function FormDetailsPage({ params }: FormDetailsPageProps) {
 
         {/* ================= RIGHT INSPECTOR ================= */}
         {mobileInspectorOpen && (
-          <div onClick={() => setMobileInspectorOpen(false)} className="fixed inset-0 z-30 bg-black/40 lg:hidden" />
+          <div onClick={() => setMobileInspectorOpen(false)} className="lg:hidden z-30 fixed inset-0 bg-black/40" />
         )}
 
         <aside
           className={cn(
-            "z-40 w-72 shrink-0 flex-col overflow-hidden border-l bg-background",
+            "z-40 flex-col bg-background border-l w-72 overflow-hidden shrink-0",
             mobileInspectorOpen ? "fixed inset-y-0 right-0 flex shadow-xl" : "hidden lg:relative lg:flex",
           )}
         >
-          <div className="flex h-12 shrink-0 items-center justify-between border-b px-4">
-            <h2 className="text-[13px] font-medium">Field settings</h2>
+          <div className="flex justify-between items-center px-4 border-b h-12 shrink-0">
+            <h2 className="font-medium text-[13px]">Field settings</h2>
             <Button
               variant="ghost"
               size="icon"
-              className="size-6 lg:hidden"
+              className="lg:hidden size-6"
               onClick={() => setMobileInspectorOpen(false)}
               aria-label="Close settings"
             >
@@ -913,16 +913,16 @@ export default function FormDetailsPage({ params }: FormDetailsPageProps) {
             </Button>
           </div>
 
-          <div className="flex-1 overflow-y-auto p-4">
+          <div className="flex-1 p-4 overflow-y-auto">
             {selectedField ? (
               <form onSubmit={handleSaveInspector} className="space-y-4">
                 <div className="flex items-center gap-2.5">
-                  <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-brand-soft text-brand">
+                  <span className="flex justify-center items-center bg-brand-soft rounded-lg size-8 text-brand shrink-0">
                     <SelectedIcon className="size-4" />
                   </span>
                   <div className="min-w-0">
-                    <p className="text-[13px] font-medium">{TYPE_NAMES[selectedField.type]}</p>
-                    <p className="truncate font-mono text-[11px] text-muted-foreground">{selectedField.labelKey}</p>
+                    <p className="font-medium text-[13px]">{TYPE_NAMES[selectedField.type]}</p>
+                    <p className="font-mono text-[11px] text-muted-foreground truncate">{selectedField.labelKey}</p>
                   </div>
                 </div>
 
@@ -959,14 +959,14 @@ export default function FormDetailsPage({ params }: FormDetailsPageProps) {
                   />
                 </Field>
 
-                <label className="flex cursor-pointer items-center justify-between border-y py-3">
-                  <span className="text-[13px] font-medium">Required</span>
+                <label className="flex justify-between items-center py-3 border-y cursor-pointer">
+                  <span className="font-medium text-[13px]">Required</span>
                   <input
                     type="checkbox"
                     role="switch"
                     checked={editIsRequired}
                     onChange={(e) => handleInspectorRequiredChange(e.target.checked)}
-                    className="relative h-5 w-9 cursor-pointer appearance-none border border-ink bg-muted after:absolute after:top-px after:left-px after:size-4 after:bg-card after:shadow-[inset_-1px_-1px_0_var(--bevel-dark)] checked:bg-brand checked:after:translate-x-4"
+                    className="after:top-px after:left-px after:absolute relative bg-muted after:bg-card checked:bg-brand after:shadow-[inset_-1px_-1px_0_var(--bevel-dark)] border border-ink w-9 h-5 after:size-4 checked:after:translate-x-4 appearance-none cursor-pointer"
                   />
                 </label>
 
@@ -994,7 +994,7 @@ export default function FormDetailsPage({ params }: FormDetailsPageProps) {
                 </Button>
               </form>
             ) : (
-              <p className="px-4 py-16 text-center text-[13px] text-muted-foreground">
+              <p className="px-4 py-16 text-[13px] text-muted-foreground text-center">
                 Select a field on the canvas to edit it.
               </p>
             )}
